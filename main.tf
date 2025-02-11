@@ -1,8 +1,6 @@
 provider "aws" {
   region = "ap-south-1" # Change region as needed
 }
-
-# 1️⃣ IAM Role for Lambda
 resource "aws_iam_role" "lambda_ec2_role" {
   name = "lambda_ec2_role"
 
@@ -19,7 +17,6 @@ resource "aws_iam_role" "lambda_ec2_role" {
     ]
   })
 }
-# 2️⃣ Attach EC2 and Lambda permissions
 resource "aws_iam_role_policy_attachment" "ec2_access" {
   role       = aws_iam_role.lambda_ec2_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
@@ -29,8 +26,6 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
   role       = aws_iam_role.lambda_ec2_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
-
-# 3️⃣ Lambda Function to START EC2
 resource "aws_lambda_function" "start_instance" {
   filename         = "start_instance.zip" # Package your Python code as ZIP
   function_name    = "start_ec2_instance"
@@ -46,8 +41,6 @@ resource "aws_lambda_function" "start_instance" {
     }
   }
 }
-
-# 4️⃣ Lambda Function to STOP EC2
 resource "aws_lambda_function" "stop_instance" {
   filename         = "stop_instance.zip"
   function_name    = "stop_ec2_instance"
@@ -63,8 +56,6 @@ resource "aws_lambda_function" "stop_instance" {
     }
   }
 }
-
-# 5️⃣ EventBridge Rule to START at 8:30 AM
 resource "aws_cloudwatch_event_rule" "start_event" {
   name                = "start_ec2_event"
   schedule_expression = "cron(25 07 * * ? *)"
@@ -75,8 +66,6 @@ resource "aws_cloudwatch_event_target" "start_target" {
   target_id = "StartEC2Instance"
   arn       = aws_lambda_function.start_instance.arn
 }
-
-# 6️⃣ EventBridge Rule to STOP at 11:00 PM
 resource "aws_cloudwatch_event_rule" "stop_event" {
   name                = "stop_ec2_event"
   schedule_expression = "cron(30 07 * * ? *)"
@@ -88,7 +77,6 @@ resource "aws_cloudwatch_event_target" "stop_target" {
   arn       = aws_lambda_function.stop_instance.arn
 }
 
-# 7️⃣ Permissions for EventBridge to invoke Lambda
 resource "aws_lambda_permission" "allow_start_event" {
   statement_id  = "AllowStartEvent"
   action        = "lambda:InvokeFunction"
